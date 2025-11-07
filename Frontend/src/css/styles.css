@@ -1,0 +1,326 @@
+#map { 
+    height: 100%; 
+    width: 100%; 
+}
+
+.scrollbar::-webkit-scrollbar { 
+    width: 8px; 
+}
+
+.scrollbar::-webkit-scrollbar-track { 
+    background: #f1f5f9; 
+}
+
+.scrollbar::-webkit-scrollbar-thumb { 
+    background: #cbd5e1; 
+    border-radius: 4px; 
+}
+
+.port-marker {
+    text-align: center;
+    transform-origin: center;
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.port-marker:hover {
+    transform: scale(1.15) translateY(-2px);
+    filter: drop-shadow(0 6px 8px rgba(0,0,0,0.4));
+}
+
+.port-marker svg {
+    transform-origin: center;
+    transition: transform 0.3s ease;
+}
+
+.port-marker:hover svg {
+    transform: rotate(-5deg);
+}
+
+/* ETA Styles */
+.eta-container {
+    background: linear-gradient(to bottom right, #1e40af, #1e3a8a);
+}
+
+.eta-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.eta-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.eta-container::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+.eta-item {
+    transition: all 0.2s ease;
+}
+
+.eta-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.port-popup {
+    text-align: center;
+    padding: 8px;
+    min-width: 200px;
+}
+
+.view-details-btn {
+    background-color: #3b82f6;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+}
+
+.view-details-btn:hover {
+    background-color: #2563eb;
+    transform: translateY(-1px);
+}
+
+/* Thêm animation cho các elements */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.port-popup {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Style cho leaflet popup */
+.leaflet-popup {
+    position: absolute;
+    transition: all 0.3s ease;
+}
+
+/* Đảm bảo popup luôn nằm trong viewport */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+    transform: translate3d(0,0,0);
+    will-change: transform;
+    box-sizing: border-box;
+}
+
+.leaflet-popup-content-wrapper {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: min(350px, 80vw) !important;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+    top: 8px;
+    right: 8px;
+    padding: 6px;
+    color: #64748b;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.leaflet-container a.leaflet-popup-close-button:hover {
+    color: #0f172a;
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.leaflet-popup-content {
+    margin: 12px;
+    width: auto !important;
+    max-width: 100%;
+    overflow-wrap: break-word;
+}
+
+.leaflet-popup-tip {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .leaflet-popup-content {
+        margin: 8px;
+        font-size: 14px;
+    }
+    
+    .ship-popup .ship-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .ship-popup .info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 641px) {
+    .ship-popup .info-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+}
+
+/* Ship popup styles */
+.ship-popup {
+    font-family: system-ui, -apple-system, sans-serif;
+    padding: 1rem;
+    background: linear-gradient(to bottom right, #1e40af, #1e3a8a);
+    color: white;
+    border-radius: 0.5rem;
+}
+
+.ship-popup .ship-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.ship-popup .ship-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.ship-popup .status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.ship-popup .status-badge.on-time {
+    background-color: #22c55e;
+    color: white;
+}
+
+.ship-popup .status-badge.delayed {
+    background-color: #ef4444;
+    color: white;
+}
+
+.ship-popup .status-badge.warning {
+    background-color: #f59e0b;
+    color: white;
+}
+
+.ship-popup .info-grid {
+    display: grid;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.ship-popup .info-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.ship-popup .info-label {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    min-width: 80px;
+}
+
+.ship-popup .info-value {
+    color: white;
+    font-weight: 500;
+}
+
+.ship-popup .warning-box {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    line-height: 1.25;
+}
+
+.ship-popup .warning-box.info {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+
+.ship-popup .warning-box.danger {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+/* Màu nền cho panel thông tin cảng */
+.bg-blue-600 {
+    background: linear-gradient(135deg, #1e40af, #3b82f6);
+}
+
+.port-list-container {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(to bottom right, #1e40af, #1e3a8a);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.port-list-header {
+    position: sticky;
+    top: 0;
+    background: linear-gradient(to right, #1e40af, #1e3a8a);
+    padding: 1rem;
+    z-index: 10;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.port-list-content {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    -ms-overflow-style: none;
+    padding: 0.25rem;
+}
+
+.port-list-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.port-list-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.port-list-content::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+.port-item {
+    padding: 0.75rem 1rem;
+    margin: 0.5rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    background: white;
+    color: #1f2937;
+}
+
+.port-item:hover {
+    transform: translateY(-2px);
+}
+
+.port-item:active {
+    transform: translateY(-1px);
+}

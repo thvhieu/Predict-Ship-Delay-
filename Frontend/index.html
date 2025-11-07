@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ship Delay Prediction System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <link rel="stylesheet" href="src/css/styles.css" />
+    <link rel="stylesheet" href="src/css/map-markers.css" />
+    <link rel="stylesheet" href="src/css/alerts.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script type="module" src="src/js/main.js"></script>
+</head>
+<body class="bg-gray-100">
+    <header class="bg-blue-800 text-white p-6 shadow-lg">
+        <h1 class="text-3xl font-bold">🚢 Hệ thống Dự đoán Thời gian Tàu</h1>
+        <p class="mt-2">Cảng Sài Gòn - Real-time Ship Tracking</p>
+    </header>
+
+    <div class="container mx-auto p-6">
+        <input type="text" id="search" placeholder="Tìm kiếm tàu..." class="w-full p-3 border-2 rounded-lg mb-6">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div class="lg:col-span-2 bg-white rounded-lg shadow-lg" style="height: 500px;">
+                <div id="map"></div>
+            </div>
+            
+            <div id="port-info" class="bg-blue-600 text-white rounded-lg shadow-lg p-6">
+                <div class="text-center py-4">
+                    <div class="inline-block w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <p class="mt-2">Đang tải thông tin cảng...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2">
+                <div id="eta-info" class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div class="animate-pulse flex justify-center items-center p-8">
+                        <div class="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                        <p class="ml-3 text-gray-600">Đang tải thông tin ETA...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-4" style="height: 362px;">
+                <div class="alerts-header">
+                    <h2 class="text-xl font-semibold">Cảnh báo thời tiết</h2>
+                </div>
+                <div id="alerts" class="alerts-content"></div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
