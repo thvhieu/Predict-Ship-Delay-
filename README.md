@@ -1,7 +1,17 @@
-# MIS Project - Ship Tracking and Weather System
+# Predict Ship Delay System
 
-[![GitHub issues](https://img.shields.io/github/issues/tranduckhang2612/project_MIS)](https://github.com/tranduckhang2612/project_MIS/issues)
-[![GitHub license](https://img.shields.io/github/license/tranduckhang2612/project_MIS)](https://github.com/tranduckhang2612/project_MIS/blob/main/LICENSE)
+## Overview
+A comprehensive system for predicting ship delays by analyzing weather conditions, tracking vessels, and calculating Estimated Time of Arrival (ETA). The system combines real-time weather data, historical shipping patterns, and machine learning models to provide accurate delay predictions.
+
+## Key Features
+- Real-time ship tracking and monitoring
+- Weather condition analysis and storm tracking
+- ETA calculation with machine learning
+- Port information management
+- Interactive map visualization
+
+[![GitHub issues](https://img.shields.io/github/issues/thvhieu/Predict-Ship-Delay-)](https://github.com/thvhieu/Predict-Ship-Delay-/issues)
+[![GitHub license](https://img.shields.io/github/license/thvhieu/Predict-Ship-Delay-)](https://github.com/thvhieu/Predict-Ship-Delay-/blob/main/LICENSE)
 
 This project provides a system for tracking ships, monitoring weather conditions, and calculating ETA (Estimated Time of Arrival) for vessels.
 
@@ -10,8 +20,8 @@ This project provides a system for tracking ships, monitoring weather conditions
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/tranduckhang2612/project_MIS.git
-cd project_MIS
+git clone https://github.com/thvhieu/Predict-Ship-Delay-.git
+cd Predict-Ship-Delay-
 ```
 
 ## Quick Start with Docker
