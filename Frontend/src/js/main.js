@@ -86,8 +86,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (mapManager) {
                     console.log(`Adding ${etaData.length} ships to map...`);
                     etaData.forEach((eta) => {
-                        if (eta.latitude && eta.longitude) {
+                        // allow 0 coordinates but reject null/undefined
+                        if (eta.latitude != null && eta.longitude != null) {
                             mapManager.addShipMarker(eta);
+                        } else {
+                            // still log for debugging
+                            console.debug(`Skipping ship marker (no coords): ${eta.ship_name}`, eta.latitude, eta.longitude);
                         }
                     });
                 }

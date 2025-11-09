@@ -1,5 +1,6 @@
 // Hàm để format thời gian
 function formatDateTime(dateString) {
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
     const day = date.getDate().toString().padStart(2, '0');
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -12,16 +13,16 @@ function formatDateTime(dateString) {
 
 // Hàm để lấy style cho status
 function getStatusStyle(status, delay) {
+    if (status === "Trễ") {
+        return {
+            text: 'Trễ',
+            class: 'bg-red-100 text-red-800'
+        };
+    }
     if (delay === 0) {
         return {
             text: 'Bình thường',
             class: 'bg-green-100 text-green-800'
-        };
-    }
-    if (delay > 4) {
-        return {
-            text: 'Trễ nhiều',
-            class: 'bg-red-100 text-red-800'
         };
     }
     return {
@@ -35,7 +36,7 @@ export async function fetchETAInfo(autoRefresh = false) {
     try {
         // Thêm timestamp và no-cache headers
         const timestamp = new Date().getTime();
-        const response = await fetch(`http://192.168.1.176:8000/api/eta?_t=${timestamp}`, {
+        const response = await fetch(`http://localhost:8000/api/eta?_t=${timestamp}`, {
             method: 'GET',
             headers: {
                 'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -51,13 +52,31 @@ export async function fetchETAInfo(autoRefresh = false) {
 
         const data = await response.json();
         console.log("ETA Data from API:", data);
+
+        // Normalize response shape in case backend returns an object wrapper
+        if (data && !Array.isArray(data)) {
+            if (Array.isArray(data.results)) {
+                if (autoRefresh) setTimeout(() => fetchETAInfo(true), 5000);
+                return data.results;
+            }
+            if (Array.isArray(data.data)) {
+                if (autoRefresh) setTimeout(() => fetchETAInfo(true), 5000);
+                return data.data;
+            }
+            // If it's an object but not an array, try to find the first array value
+            const firstArray = Object.values(data).find(v => Array.isArray(v));
+            if (firstArray) {
+                if (autoRefresh) setTimeout(() => fetchETAInfo(true), 5000);
+                return firstArray;
+            }
+        }
         
         // Nếu autoRefresh = true, tự động gọi lại API sau mỗi 5 giây
         if (autoRefresh) {
             setTimeout(() => fetchETAInfo(true), 5000); // Giảm thời gian refresh xuống 5 giây
         }
         
-        return data;
+    return data;
     } catch (error) {
         console.error('Error fetching ETA data:', error);
         return [];
@@ -189,7 +208,7 @@ export function renderETAInfo(container, etaData) {
 // Hàm để lấy thông tin ETA của một tàu cụ thể
 export async function fetchShipETA(shipName) {
     try {
-        const response = await fetch(`http://192.168.1.176:8000/api/eta/${encodeURIComponent(shipName)}`);
+        const response = await fetch(`http://localhost:8000/api/eta/${encodeURIComponent(shipName)}`);
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }

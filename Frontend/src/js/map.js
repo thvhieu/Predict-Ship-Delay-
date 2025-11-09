@@ -178,109 +178,121 @@ MapManager.prototype.addShipMarker = function(ship) {
     });
 
     // --------------------------
-    //  Tạo marker tàu trên bản đồ
+    //  Tạo marker tàu trên bản đồ với popup được tạo trước
     // --------------------------
+    const getPopupContent = () => {
+        const statusClass = ship.delay_hours === 0
+            ? 'on-time'
+            : ship.delay_hours > 4
+            ? 'delayed'
+            : 'warning';
+        
+        const statusText = ship.delay_hours === 0 
+            ? 'Đúng giờ' 
+            : ship.delay_hours > 4 
+            ? 'Trễ nhiều' 
+            : 'Cảnh báo';
+
+        const etaDate = new Date(ship.eta_expected);
+        const formattedETA = !isNaN(etaDate.getTime()) 
+            ? etaDate.toLocaleString('vi-VN')
+            : 'Không xác định';
+
+        return `
+            <div class="ship-popup">
+                <div class="ship-header">
+                    <h3 class="ship-name">${ship.ship_name || 'Không tên'}</h3>
+                    <div class="status-badge ${statusClass}">${statusText}</div>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">📍</span>
+                        <span class="info-value">${ship.port_from || '?'} → ${ship.port_to || '?'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">🌍</span>
+                        <span class="info-value">${lat.toFixed(2)}°N, ${lng.toFixed(2)}°E</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">⏰</span>
+                        <span class="info-value">${formattedETA}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">⌛</span>
+                        <span class="info-value ${ship.delay_hours > 0 ? 'text-red-600' : 'text-green-600'}">
+                            ${ship.delay_hours > 0 ? `+${ship.delay_hours}h` : 'Đúng giờ'}
+                        </span>
+                    </div>
+                </div>
+                ${ship.reason ? `
+                    <div class="warning-box info mt-2">
+                        <span class="text-orange-600">ℹ️</span> ${ship.reason}
+                    </div>` : ''}
+                ${ship.distance_to_hazard ? `
+                    <div class="warning-box danger mt-2">
+                        <span class="text-red-600">⚠️</span> ${ship.distance_to_hazard.toFixed(1)}km từ vùng nguy hiểm
+                    </div>` : ''}
+            </div>
+        `;
+    };
+
     const marker = L.marker([lat, lng], {
         icon: shipIcon,
         title: ship.ship_name
     }).addTo(this.map);
 
-    // --------------------------
-    //  Tạo popup hiển thị thông tin tàu
-    // --------------------------
-    const popupHtml = `
-        <div class="ship-popup">
-            <div class="ship-header">
-                <h3 class="ship-name">${ship.ship_name}</h3>
-                <div class="status-badge ${
-                    ship.delay_hours === 0
-                        ? 'on-time'
-                        : ship.delay_hours > 4
-                        ? 'delayed'
-                        : 'warning'
-                }">
-                    ${ship.delay_hours === 0 ? 'Đúng giờ' :
-                      ship.delay_hours > 4 ? 'Trễ nhiều' : 'Cảnh báo'}
-                </div>
-            </div>
-            <div class="info-grid">
-                <div class="info-item" title="Tuyến đường di chuyển">
-                    <span class="info-label">📍 Tuyến:</span>
-                    <span class="info-value">${ship.port_from} → ${ship.port_to}</span>
-                </div>
-                <div class="info-item" title="Vị trí hiện tại">
-                    <span class="info-label">🌍 Vị trí:</span>
-                    <span class="info-value">${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E</span>
-                </div>
-                <div class="info-item" title="Thời gian dự kiến đến">
-                    <span class="info-label">⏰ ETA:</span>
-                    <span class="info-value">${new Date(ship.eta_expected).toLocaleString('vi-VN')}</span>
-                </div>
-                <div class="info-item" title="Thời gian trễ">
-                    <span class="info-label">⌛ Độ trễ:</span>
-                    <span class="info-value ${ship.delay_hours > 0 ? 'text-red-600' : 'text-green-600'}">
-                        ${ship.delay_hours > 0 ? `+${ship.delay_hours} giờ` : 'Không có'}
-                    </span>
-                </div>
-            </div>
-            ${ship.reason ? `
-                <div class="warning-box info" title="Lý do trễ">
-                    <span class="text-orange-600">ℹ️</span> ${ship.reason}
-                </div>` : ''}
-            ${ship.distance_to_hazard ? `
-                <div class="warning-box danger" title="Cảnh báo vùng nguy hiểm">
-                    <span class="text-red-600">⚠️</span> Cách vùng nguy hiểm: ${ship.distance_to_hazard.toFixed(1)} km
-                </div>` : ''}
-        </div>
-    `;
-
+    // Tạo popup với content được tạo theo yêu cầu
     const popup = L.popup({
-        maxWidth: 'auto',
+        maxWidth: 300,
         className: 'ship-popup-custom',
         autoPan: true,
         autoPanPadding: [50, 50],
         closeButton: true,
         closeOnClick: false,
         keepInView: true
-    }).setContent(popupHtml);
-    
-    marker.bindPopup(popup);
-    
-    // Xử lý các sự kiện để giữ popup trong viewport
-    this.map.on('zoomend moveend', () => {
-        if (marker.getPopup().isOpen()) {
-            const map = this.map;
-            const popup = marker.getPopup();
-            const pos = map.latLngToContainerPoint(marker.getLatLng());
-            const mapSize = map.getSize();
-            
-            // Kiểm tra nếu popup nằm ngoài viewport
-            if (pos.x < 0 || pos.x > mapSize.x || pos.y < 0 || pos.y > mapSize.y) {
-                // Tính toán vị trí mới để popup nằm trong viewport
-                const padding = 50;
-                const newPos = L.point(
-                    Math.min(Math.max(pos.x, padding), mapSize.x - padding),
-                    Math.min(Math.max(pos.y, padding), mapSize.y - padding)
-                );
-                const newLatLng = map.containerPointToLatLng(newPos);
-                popup.setLatLng(newLatLng);
-            }
-            
-            popup.update();
-        }
     });
     
-    // Xử lý sự kiện khi popup mở
-    marker.on('popupopen', (e) => {
-        const popup = e.popup;
-        const map = this.map;
-        
-        // Đảm bảo popup nằm trong viewport khi mở
-        const bounds = map.getBounds().pad(-0.1); // Padding 10% từ mép map
-        if (!bounds.contains(popup.getLatLng())) {
-            const center = marker.getLatLng();
-            map.flyTo(center, map.getZoom(), {
-                duration: 0.5
+    // Lazy loading popup content only when needed
+    let popupContent = null;
+    marker.bindPopup(() => {
+        if (!popupContent) {
+            popupContent = getPopupContent();
+        }
+        return popupContent;
+    });
+    
+    // Debounced viewport check function
+    const checkViewport = (() => {
+        let timeout;
+        return () => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                if (!marker.getPopup().isOpen()) return;
+                
+                const map = this.map;
+                const pos = map.latLngToContainerPoint(marker.getLatLng());
+                const mapSize = map.getSize();
+                
+                if (pos.x < 0 || pos.x > mapSize.x || pos.y < 0 || pos.y > mapSize.y) {
+                    const padding = 50;
+                    const newPos = L.point(
+                        Math.min(Math.max(pos.x, padding), mapSize.x - padding),
+                        Math.min(Math.max(pos.y, padding), mapSize.y - padding)
+                    );
+                    marker.getPopup().setLatLng(map.containerPointToLatLng(newPos));
+                }
+            }, 100);
+        };
+    })();
+    
+    // Optimize event handlers
+    this.map.on('zoomend moveend', checkViewport);
+    
+    marker.on('popupopen', () => {
+        const bounds = this.map.getBounds().pad(-0.1);
+        if (!bounds.contains(marker.getLatLng())) {
+            this.map.flyTo(marker.getLatLng(), this.map.getZoom(), {
+                duration: 0.3
             });
         }
     });

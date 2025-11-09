@@ -50,17 +50,13 @@ async def get_eta_info():
                 e.ship_name,
                 e.port_from,
                 e.port_to,
-                DATE_FORMAT(e.eta_expected, '%Y-%m-%dT%H:%i:%s') as eta_expected,
-                COALESCE(CAST(e.delay_hours AS FLOAT), 0) as delay_hours,
-                CASE 
-                    WHEN COALESCE(e.delay_hours, 0) = 0 THEN 'active'
-                    WHEN COALESCE(e.delay_hours, 0) > 4 THEN 'inactive'
-                    ELSE 'warning'
-                END as status,
+                COALESCE(DATE_FORMAT(e.eta_expected, '%Y-%m-%dT%H:%i:%s'), NULL) as eta_expected,
+                COALESCE(e.delay_hours, 0) as delay_hours,
+                COALESCE(e.status, 'unknown') as status,
                 e.reason,
-                COALESCE(CAST(e.distance_to_hazard AS FLOAT), 0) as distance_to_hazard,
-                CAST(e.latitude AS DECIMAL(10,6)) as latitude,
-                CAST(e.longitude AS DECIMAL(10,6)) as longitude,
+                COALESCE(e.distance_to_hazard, 0) as distance_to_hazard,
+                e.latitude,
+                e.longitude,
                 p1.latitude as from_lat,
                 p1.longitude as from_lng,
                 p2.latitude as to_lat,
@@ -68,8 +64,6 @@ async def get_eta_info():
             FROM eta_results e
             LEFT JOIN sea_ports p1 ON e.port_from = p1.port_name
             LEFT JOIN sea_ports p2 ON e.port_to = p2.port_name
-            WHERE e.latitude IS NOT NULL 
-            AND e.longitude IS NOT NULL
             ORDER BY e.ship_name ASC
         """
         
@@ -80,18 +74,22 @@ async def get_eta_info():
         processed_results = []
         for row in results:
             # Convert None values to appropriate defaults
-            row_dict = {
-                "ship_name": row["ship_name"],
-                "port_from": row["port_from"],
-                "port_to": row["port_to"],
-                "eta_expected": row["eta_expected"],
-                "delay_hours": float(row["delay_hours"] or 0),
-                "status": row["status"],
-                "reason": row["reason"] or None,
-                "distance_to_hazard": float(row["distance_to_hazard"] or 0),
-                "latitude": float(row["latitude"]) if row["latitude"] is not None else None,
-                "longitude": float(row["longitude"]) if row["longitude"] is not None else None
-            }
+            try:
+                row_dict = {
+                    "ship_name": row["ship_name"] or "",
+                    "port_from": row["port_from"] or "",
+                    "port_to": row["port_to"] or "",
+                    "eta_expected": row["eta_expected"],
+                    "delay_hours": float(row["delay_hours"]) if row["delay_hours"] is not None else 0,
+                    "status": row["status"] or "unknown",
+                    "reason": row["reason"],
+                    "distance_to_hazard": float(row["distance_to_hazard"]) if row["distance_to_hazard"] is not None else 0,
+                    "latitude": float(row["latitude"]) if row["latitude"] is not None else None,
+                    "longitude": float(row["longitude"]) if row["longitude"] is not None else None
+                }
+            except (ValueError, TypeError) as e:
+                print(f"Error processing row {row['ship_name']}: {str(e)}")
+                continue
             processed_results.append(row_dict)
             
         return JSONResponse(content=processed_results)
@@ -124,7 +122,6 @@ async def get_ship_eta(ship_name: str):
                 CAST(longitude AS FLOAT) as longitude
             FROM eta_results
             WHERE ship_name = %s
-            ORDER BY created_at DESC
             LIMIT 1
         """
         
