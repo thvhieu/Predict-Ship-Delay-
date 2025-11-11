@@ -201,7 +201,7 @@ MapManager.prototype.addShipMarker = function(ship) {
         return `
             <div class="ship-popup">
                 <div class="ship-header">
-                    <h3 class="ship-name">${ship.ship_name || 'Không tên'}</h3>
+                    <h3 class="ship-name" style ="color: white;">${ship.ship_name || 'Không tên'}</h3>
                     <div class="status-badge ${statusClass}">${statusText}</div>
                 </div>
                 <div class="info-grid">

@@ -9,6 +9,7 @@ router = APIRouter()
 
 class ETAResponse(BaseModel):
     ship_name: str
+    imo: Optional[int] = None
     port_from: str
     port_to: str
     eta_expected: Optional[str] = None  # Changed to string to handle ISO format
@@ -47,6 +48,7 @@ async def get_eta_info():
         
         query = """
             SELECT 
+                e.IMO as imo,
                 e.ship_name,
                 e.port_from,
                 e.port_to,
@@ -62,6 +64,7 @@ async def get_eta_info():
                 p2.latitude as to_lat,
                 p2.longitude as to_lng
             FROM eta_results e
+            -- include IMO column (aliased to lower-case 'imo' for predictable dict key)
             LEFT JOIN sea_ports p1 ON e.port_from = p1.port_name
             LEFT JOIN sea_ports p2 ON e.port_to = p2.port_name
             ORDER BY e.ship_name ASC
@@ -76,6 +79,7 @@ async def get_eta_info():
             # Convert None values to appropriate defaults
             try:
                 row_dict = {
+                    "imo": int(row["imo"]) if row.get("imo") is not None else None,
                     "ship_name": row["ship_name"] or "",
                     "port_from": row["port_from"] or "",
                     "port_to": row["port_to"] or "",
@@ -107,6 +111,7 @@ async def get_ship_eta(ship_name: str):
         query = """
             SELECT 
                 ship_name,
+                IMO as imo,
                 port_from,
                 port_to,
                 eta_expected,

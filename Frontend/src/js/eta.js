@@ -98,8 +98,8 @@ export function renderETAInfo(container, etaData) {
         return;
     }
 
-    // Container
-    container.className = 'bg-white rounded-lg shadow-lg overflow-hidden flex flex-col';
+    // Container - allow visible overflow so inner table container can scroll horizontally
+    container.className = 'bg-white rounded-lg shadow-lg overflow-visible flex flex-col';
     
     // Header (fixed)
     const header = document.createElement('div');
@@ -110,76 +110,125 @@ export function renderETAInfo(container, etaData) {
     `;
     container.appendChild(header);
 
-    // Table container with scroll
+    // Table container with vertical scroll only; horizontal should not be needed because cells will wrap
     const tableContainer = document.createElement('div');
     tableContainer.className = 'overflow-auto max-h-[300px] custom-scrollbar';
     
     // Table
     const table = document.createElement('table');
-    table.className = 'w-full';
+    // use table-auto so columns size to content and can shrink; allow wrapping inside cells
+    table.className = 'w-full table-auto'
 
-    // Table header
+    // Table header with sortable Delay and Status
     const thead = document.createElement('thead');
     thead.className = 'bg-white sticky top-0 shadow-sm z-10';
     thead.innerHTML = `
         <tr class="text-left border-b">
-            <th class="p-3 w-[15%] font-semibold">Tàu</th>
-            <th class="p-3 w-[25%] font-semibold">Tuyến</th>
-            <th class="p-3 w-[20%] font-semibold">Vị trí</th>
-            <th class="p-3 w-[15%] font-semibold">ETA</th>
-            <th class="p-3 w-[10%] font-semibold">Delay</th>
-            <th class="p-3 w-[15%] font-semibold">Status</th>
+            <th class="p-3 w-[18%] font-semibold">Tàu</th>
+            <th class="p-3 w-[8%] font-semibold">IMO</th>
+            <th class="p-3 w-[24%] font-semibold">Tuyến</th>
+            <th class="p-3 w-[14%] font-semibold">Vị trí</th>
+            <th class="p-3 w-[16%] font-semibold">ETA</th>
+            <th id="th-delay" class="p-3 w-[6%] font-semibold cursor-pointer select-none">Delay <span id="sort-delay">↕</span></th>
+            <th class="p-3 w-[14%] font-semibold">Status</th>
         </tr>
     `;
     table.appendChild(thead);
 
-    // Table body
+    // Table body and rendering helpers
     const tbody = document.createElement('tbody');
     tbody.className = 'bg-white';
-    tbody.innerHTML = etaData.map((eta, index) => {
-        const status = getStatusStyle(eta.status, eta.delay_hours);
-        const delayText = eta.delay_hours > 0 
-            ? `<span class="text-orange-500">+${eta.delay_hours}h</span>`
-            : `<span class="text-green-600">On time</span>`;
 
-        return `
+    // Sorting state
+    let sortState = { column: null, direction: 'asc' };
+
+    function statusRank(status) {
+        if (!status) return 99;
+        const s = String(status).toLowerCase();
+        if (s.includes('active') || s.includes('bình') || s.includes('on time') || s.includes('normal')) return 0;
+        if (s.includes('warning') || s.includes('cảnh')) return 1;
+        if (s.includes('inactive') || s.includes('trễ') || s.includes('late')) return 2;
+        return 3;
+    }
+
+    // Stable sort: keep original order for equal keys by using the original index as a tiebreaker
+    function sortData(data, column, direction) {
+        if (!Array.isArray(data)) return [];
+        if (!column) return [...data];
+
+        // attach original index
+        const wrapped = data.map((item, idx) => ({ item, idx }));
+
+        wrapped.sort((a, b) => {
+            if (column === 'delay') {
+                const av = parseFloat(a.item.delay_hours) || 0;
+                const bv = parseFloat(b.item.delay_hours) || 0;
+                if (av === bv) return a.idx - b.idx; // stable tie-breaker
+                return direction === 'asc' ? av - bv : bv - av;
+            }
+
+            if (column === 'status') {
+                const ar = statusRank(a.item.status);
+                const br = statusRank(b.item.status);
+                if (ar === br) return a.idx - b.idx; // stable tie-breaker
+                return direction === 'asc' ? ar - br : br - ar;
+            }
+
+            // fallback to stable index order
+            return a.idx - b.idx;
+        });
+
+        return wrapped.map(w => w.item);
+    }
+
+    function renderRows(data) {
+        tbody.innerHTML = data.map((eta, index) => {
+            const status = getStatusStyle(eta.status, eta.delay_hours);
+            const delayText = eta.delay_hours > 0 
+                ? `<span class="text-orange-500">+${eta.delay_hours}h</span>`
+                : `<span class="text-green-600">On time</span>`;
+
+            return `
             <tr class="${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-b hover:bg-blue-50 transition-colors">
-                <td class="p-3 w-[15%]">
-                    <div class="font-medium truncate">${eta.ship_name}</div>
-                </td>
-                <td class="p-3 w-[25%]">
-                    <div class="flex items-center space-x-2">
-                        <span class="truncate">${eta.port_from}</span>
-                        <span>→</span>
-                        <span class="truncate">${eta.port_to}</span>
-                    </div>
-                </td>
-                <td class="p-3 w-[20%]">
-                    ${(eta.latitude || eta.latitude_ship) && (eta.longitude || eta.longitude_ship) ? 
-                      `<div class="text-gray-600 flex flex-col">
-                         <span title="Vĩ độ">${(eta.latitude || eta.latitude_ship).toFixed(4)}°N</span>
-                         <span title="Kinh độ">${(eta.longitude || eta.longitude_ship).toFixed(4)}°E</span>
-                       </div>` : 
-                      '<span class="text-gray-400">N/A</span>'}
-                </td>
-                <td class="p-3 w-[15%]">
-                    <div class="whitespace-nowrap">${formatDateTime(eta.eta_expected)}</div>
-                </td>
-                <td class="p-3 w-[10%]">
-                    <div class="whitespace-nowrap">${delayText}</div>
-                </td>
-                <td class="p-3 w-[15%]">
-                    <span class="px-2 py-0.5 rounded-full text-sm ${status.class} whitespace-nowrap">
-                        ${status.text}
-                    </span>
-                </td>
-            </tr>
-        `;
-    }).join('');
-    
+                <td class="p-3 w-[18%]"><div class="font-medium whitespace-normal break-words">${eta.ship_name}</div></td>
+                <td class="p-3 w-[8%] text-center"><div class="whitespace-normal">${eta.imo ? String(eta.imo).padStart(7, '0') : 'N/A'}</div></td>
+                <td class="p-3 w-[24%]"><div class="whitespace-normal">${eta.port_from} → ${eta.port_to}</div></td>
+                <td class="p-3 w-[14%] text-sm text-gray-600">${(eta.latitude || eta.latitude_ship) && (eta.longitude || eta.longitude_ship) ? `${(eta.latitude || eta.latitude_ship).toFixed(4)}°N, ${(eta.longitude || eta.longitude_ship).toFixed(4)}°E` : 'N/A'}</td>
+                <td class="p-3 w-[16%]"><div class="whitespace-nowrap">${formatDateTime(eta.eta_expected)}</div></td>
+                <td class="p-3 w-[6%]"><div class="whitespace-nowrap">${delayText}</div></td>
+                <td class="p-3 w-[14%]"><span class="px-2 py-0.5 rounded-full text-sm ${status.class} whitespace-normal break-words">${status.text}</span></td>
+            </tr>`;
+        }).join('');
+    }
+
+    // initial render
+    renderRows(etaData);
+
     table.appendChild(tbody);
     tableContainer.appendChild(table);
     container.appendChild(tableContainer);
+
+    // Attach sort listeners
+    const thDelay = document.getElementById('th-delay');
+    const sortDelaySpan = document.getElementById('sort-delay');
+
+    function updateSortIcons() {
+        if (sortDelaySpan) sortDelaySpan.textContent = sortState.column === 'delay' ? (sortState.direction === 'asc' ? '▲' : '▼') : '↕';
+    }
+
+    function applySort(column) {
+        if (sortState.column === column) {
+            sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortState.column = column;
+            sortState.direction = 'asc';
+        }
+        const sorted = sortData(etaData, sortState.column, sortState.direction);
+        renderRows(sorted);
+        updateSortIcons();
+    }
+
+    if (thDelay) thDelay.addEventListener('click', () => applySort('delay'));
     
     // Add custom scrollbar styles if not already added
     if (!document.getElementById('custom-scrollbar-style')) {
